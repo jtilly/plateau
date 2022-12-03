@@ -33,6 +33,14 @@ except Exception:
     ARROW_DEV = True
 
 
+PANDAS_VERSION_GE_14 = parse_version(pd.__version__) >= parse_version("1.4")
+
+if PANDAS_VERSION_GE_14:
+    Index = pd.Int64Index
+else:
+    Index = pd.NumericIndex
+
+
 def test_store_schema_metadata(store, df_all_types):
     store_schema_metadata(
         schema=make_meta(df_all_types, origin="df_all_types"),
@@ -390,7 +398,7 @@ def test_validate_different_cats_different_type():
         validate_compatible([meta, meta_2])
 
 
-@pytest.mark.parametrize("index", [pd.Int64Index([0]), pd.RangeIndex(start=0, stop=1)])
+@pytest.mark.parametrize("index", [Index([0]), pd.RangeIndex(start=0, stop=1)])
 def test_schema_dataframe_rountrip(index, df_all_types):
     df = pd.DataFrame(df_all_types, index=index)
 

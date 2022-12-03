@@ -9,6 +9,7 @@ import time
 from typing import Any, Iterable, List, Optional
 
 import numpy as np
+import packaging
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -34,6 +35,10 @@ try:
     HAVE_BOTO = True
 except ImportError:
     HAVE_BOTO = False
+
+PANDAS_VERSION_GE_14 = packaging.version.parse(
+    pd.__version__
+) >= packaging.version.parse("1.4")
 
 _logger = logging.getLogger(__name__)
 
@@ -267,7 +272,12 @@ class ParquetSerializer(DataFrameSerializer):
                             .empty_table()
                             .to_pandas(date_as_object=date_as_object)
                         )
-                        index = pd.Int64Index(
+                        if PANDAS_VERSION_GE_14:
+                            Index = pd.Int64Index
+                        else:
+                            Index = pd.NumericIndex
+
+                        index = Index(
                             pd.RangeIndex(start=0, stop=parquet_file.metadata.num_rows)
                         )
                         df = pd.DataFrame(df, index=index)
